@@ -8,40 +8,51 @@
       </div>
     </div>
     <div class="input-box">
-      <input v-model="newMessage" @keyup.enter="sendMessage" placeholder="Type a message..." />
+      <input v-model="newMessage" @keyup.enter="sendMessage" :enabled="inputEnabled" :placeholder="placeholderText" />
       <button @click="sendMessage">Send</button>
     </div>
   </div>
 </template>
 
 <script>
+import {openAiChat} from '@/api/infinitibyte'
+
 export default {
   data() {
     return {
       messages: [],
       newMessage: "",
+      inputEnabled: true,
+      placeholderText: "Type a message...",
     };
   },
   methods: {
     sendMessage() {
+      this.inputEnabled = false;
+      this.placeholderText = "Waiting for chatGPT response..."
+
       if (this.newMessage.trim() === "") return;
       const userMessage = { text: this.newMessage, source: 'user' };
-      console.log(userMessage);
       this.messages.push(userMessage);
 
       // 模拟后端API响应
-      const response = { text: this.newMessage  + " -> responded", source: 'server' };
-      console.log(response);
-      this.messages.push(response);
+      const requestBody = {
+        "content": this.newMessage
+      }
+      const response = openAiChat(requestBody)
+      console.log(response)
+      // const response = { text: this.newMessage  + " -> responded", source: 'server' };
+      this.messages.push(response.data.content);
       this.newMessage = "";
 
-      console.log(this.messages);
       // 滚动到底部
       this.$nextTick(() => {
         const chatBox = this.$refs.chatBox;
         chatBox.scrollTop = chatBox.scrollHeight;
       });
 
+      this.inputEnabled = true;
+      this.placeholderText = "Type a message...";
       // 发送消息到后端API
       // 假设您有一个名为sendMessageToApi的方法发送消息到后端
       // 这里只是一个示例
